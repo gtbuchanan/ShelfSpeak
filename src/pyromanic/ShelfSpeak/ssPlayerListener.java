@@ -263,7 +263,7 @@ public class ssPlayerListener extends PlayerListener
         		event.setCancelled(true);
         		if(cmdParts[0].equalsIgnoreCase("/cancel"))
         			player.sendMessage(ChatColor.RED + "Edit Cancelled.");
-        		else
+        		else if(shelf != null)
         		{
         			try 
         			{

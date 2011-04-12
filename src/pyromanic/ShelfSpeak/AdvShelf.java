@@ -59,12 +59,14 @@ public class AdvShelf
 	
 	public static String buildPath(Location loc)
 	{
-		String temp =
-			ShelfSpeak.shelfDir +
+		String worldPath = ShelfSpeak.shelfDir + loc.getWorld().getName() + "/";
+		File f = new File(worldPath);
+		f.mkdir();
+		String fileName =
 			(int)loc.getX() + "_" +
 			(int)loc.getY() + "_" +
 			(int)loc.getZ();
-		return temp;
+		return worldPath + fileName;
 	}
 	
 	private String buildString()
