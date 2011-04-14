@@ -1,6 +1,5 @@
 package pyromanic.ShelfSpeak;
 
-import java.io.IOException;
 import org.bukkit.block.Block;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -33,13 +32,10 @@ public class ssBlockListener extends BlockListener
     	}
     	if(block.getType() == Material.BOOKSHELF && plugin.isEnabled())
     	{
-    		AdvShelf shelf = new AdvShelf(block);
+    		AdvShelf shelf = new AdvShelf(block.getLocation());
     		shelf.setOwner(player.getName());
     		//player.sendMessage("You placed a bookshelf.");
-    		try 
-    		{	shelf.save();	} 
-    		catch (IOException e) 
-    		{	e.printStackTrace();	}
+    		shelf.save();
     	}
     }
     
@@ -50,7 +46,7 @@ public class ssBlockListener extends BlockListener
     	
     	if(block.getType() == Material.BOOKSHELF && plugin.isEnabled())
     	{
-    		AdvShelf shelf = new AdvShelf(block);
+    		AdvShelf shelf = new AdvShelf(block.getLocation());
     		if(shelf.delete())
     			player.sendMessage(ChatColor.RED + "Bookshelf destroyed.");
     	}
