@@ -4,14 +4,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Set;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 
 public class AdvShelf
 {
@@ -26,7 +29,10 @@ public class AdvShelf
 	private double _z;
 	private String _owner = null;
 	private String _mod = null;
-	private HashMap<Integer, HashMap<Integer, String>> _pages = new HashMap<Integer, HashMap<Integer, String>>();
+	private HashMap<Integer, HashMap<Integer, String>> _pages = 
+		new HashMap<Integer, HashMap<Integer, String>>();
+	private ArrayList<String> _writers = null;
+	private ArrayList<String> _readers = null;
 	private boolean _breakable = true;
 	
 	public AdvShelf(String world, double x, double y, double z)
@@ -155,11 +161,76 @@ public class AdvShelf
 		return 0;
 	}
 	
+	public boolean canWrite(String playerName)
+	{	return (_writers == null 
+			|| (_writers != null && _writers.contains(playerName.toLowerCase()))
+			|| playerName.equalsIgnoreCase(_owner));	}
+	
+	public boolean setWritable(boolean decision)
+	{	
+		_writers = (decision) ? null : new ArrayList<String>();	
+		return !decision;
+	}
+	
+	public ArrayList<String> getWriters()
+	{	return _writers;	}
+	
+	public boolean addWriter(String playerName)
+	{
+		playerName = playerName.toLowerCase();
+		if(_writers == null)
+			setWritable(false);
+		if(!_writers.contains(playerName))
+		{
+			_writers.add(playerName);
+			return true;
+		}
+		else
+		{
+			_writers.remove(playerName);
+			return false;
+		}
+	}
+	
+	public boolean canRead(String playerName)
+	{	return (_readers == null 
+			|| (_readers != null && _readers.contains(playerName.toLowerCase()))
+			|| playerName.equalsIgnoreCase(_owner));	}
+	
+	public boolean setReadable(boolean decision)
+	{	
+		_readers = (decision) ? null : new ArrayList<String>();	
+		return !decision;
+	}
+	
+	public ArrayList<String> getReaders()
+	{	return _readers;	}
+	
+	public boolean addReader(String playerName)
+	{
+		playerName = playerName.toLowerCase();
+		if(_readers == null)
+			setReadable(false);
+		if(!_readers.contains(playerName))
+		{
+			_readers.add(playerName);
+			return true;
+		}
+		else
+		{
+			_readers.remove(playerName);
+			return false;
+		}
+	}
+	
+	public void setBreakable(boolean decision)
+	{	_breakable = decision;	}
+	
 	public boolean isBreakable()
 	{	return _breakable;	}
 	
 	public boolean save()
-	{	return ssDBAccess.editShelf(this);	}
+	{	return ssDBAccess.writeShelf(this);	}
 	
 	public boolean delete()
 	{	return ssDBAccess.deleteShelf(this);	}
@@ -271,5 +342,71 @@ public class AdvShelf
 		String path = buildPath();
 		File f = new File(path);
 		return f.exists();
+	}
+
+	public static void showPage(Player player, AdvShelf shelf, int page)
+    {
+    	HashMap<Integer, HashMap<Integer, String>> pages = shelf.getPages();
+    	
+    	if(!ssPermissions.getInstance().read(player))
+	    	player.sendMessage(ChatColor.RED + "[ShelfSpeak] You do not have permission to read.");
+    	else if(!shelf.canRead(player.getName()) && !ssPermissions.getInstance().readAll(player))
+    		player.sendMessage(ChatColor.RED + "[ShelfSpeak] The owner has not granted you read permissions.");
+    	else if(!shelf.hasOwner())
+    		player.sendMessage(ChatColor.DARK_AQUA + "The Bookshelf seems to be empty...");
+    	else if(!shelf.hasPages() && ShelfSpeak.session.activeCmd.get(player) == null)
+    		player.sendMessage(ChatColor.DARK_AQUA + "The Bookshelf is filled with " + 
+    				ChatColor.GREEN + shelf.getOwner() + ChatColor.DARK_AQUA + "'s books!");
+    	else if(page > shelf.getMaxPage())
+    		player.sendMessage(ChatColor.RED + "[ShelfSpeak] Page " + page + " does not exist yet.");
+    	else
+    	{
+	    	player.sendMessage(ChatColor.DARK_AQUA + 
+	    			String.format("********" + ChatColor.GREEN + "%1$s" + ChatColor.DARK_AQUA + 
+	    					"'s BookShelf - Page: " + ChatColor.GREEN + 
+	    					"%2$s of %3$s" + ChatColor.DARK_AQUA + "********", 
+	    					shelf.getOwner(), page, shelf.getMaxPage()));
+	    	
+	    	if(pages.containsKey(page) && pages.get(page).size() > 0)
+	    	{
+	    		HashMap<Integer, String> lines = shelf.getPages().get(page);
+	    		for(int x = 1; x <= shelf.getMaxLine(page); x++)
+	    		{
+	    			String line = "";
+	    			if(lines.containsKey(x))
+	    				line = lines.get(x);
+	    			player.sendMessage(String.format("%02d", (x)) + ": " + line);
+	    		}
+	    	}
+	    	else
+	    		player.sendMessage("Page " + page + " contains no text.");
+			player.sendMessage(ChatColor.DARK_AQUA + "**********Last Modified By: " + ChatColor.GREEN +
+					(shelf.hasModifier() ? shelf.getModifier() : "N/A") + ChatColor.DARK_AQUA +  "**********");
+    	}
+    }
+
+	public void showLocks(Player player, String type)
+	{
+		type = type.toUpperCase().charAt(0) + type.substring(1).toLowerCase();
+		ArrayList<String> locks = null;
+		if(type.equalsIgnoreCase("read"))
+			locks = _readers;
+		else if(type.equalsIgnoreCase("write"))
+			locks = _writers;
+		if(locks != null)
+		{
+			player.sendMessage(ChatColor.DARK_AQUA + "******" + type + " Privs******");
+			if(!locks.isEmpty())
+				for(int x = 0; x<locks.size(); x++)
+				{
+					player.sendMessage(ChatColor.DARK_AQUA + "" + (x+1) + ": " + 
+							ChatColor.AQUA + locks.get(x));
+				}
+			else
+				player.sendMessage(ChatColor.AQUA + "No privs have been added.");
+			player.sendMessage(ChatColor.DARK_AQUA + "***********************");
+		}
+		else
+			player.sendMessage(ChatColor.RED + "[ShelfSpeak] " + type + " is not locked.");
 	}
 }

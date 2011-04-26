@@ -16,31 +16,6 @@ import java.util.logging.Level;
 public class ssDBAccess 
 {
 	    private static Connection conn = null;
-	    public static final String SHELVES = 
-	    	"CREATE TABLE [Shelves] (\n" +
-	    	"[ShelfID] INTEGER,\n" +
-	    	"[World] VARCHAR(15),\n" +
-	    	"[X] INTEGER,\n" +
-	    	"[Y] INTEGER,\n" +
-	    	"[Z] INTEGER,\n" +
-	    	"[Owner] VARCHAR(15) NOT NULL,\n" +
-	    	"[Modifier] VARCHAR(15) NOT NULL,\n" +
-	    	"[Breakable] BOOLEAN NOT NULL DEFAULT TRUE,\n" +
-	    	"PRIMARY KEY([ShelfID]))";
-	    public static final String MESSAGES =
-	    	"CREATE TABLE [Messages] (\n" +
-	    	"[ShelfID] INTEGER,\n" +
-	    	"[PageNo] INTEGER,\n" +
-	    	"[LineNo] INTEGER,\n" +
-	    	"[Text] VARCHAR(100),\n" +
-	    	"PRIMARY KEY([ShelfID], [PageNo], [LineNo]),\n" +
-	    	"FOREIGN KEY ([ShelfID]) REFERENCES [Shelves]([ShelfID]))";	    
-	    public static final String LOCKS =
-	    	"CREATE TABLE [Locks] (\n" +
-	    	"[ShelfID] INTEGER,\n" +
-	    	"[Type] VARCHAR(5) NOT NULL DEFAULT 'write',\n" +
-	    	"[Player] VARCHAR(15) NOT NULL,\n" +
-	    	"FOREIGN KEY ([ShelfID]) REFERENCES [Shelves]([ShelfID]))";
 	    
 	    public static Connection initialize(File dataFolder) {
 	        try 
@@ -136,6 +111,9 @@ public class ssDBAccess
 					{
 						shelf.setOwner(set.getString("Owner"));
 						shelf.setModifier(set.getString("Modifier"));
+						shelf.setBreakable(set.getBoolean("Breakable"));
+						shelf.setReadable(set.getBoolean("Readable"));
+						shelf.setWritable(set.getBoolean("Writable"));
 					}
 					set = stmt.executeQuery("SELECT * FROM [Messages] " +
 											"WHERE [ShelfID] = " + shelf.getID() +
@@ -149,13 +127,24 @@ public class ssDBAccess
 							shelf.getPages().put(page, new HashMap<Integer, String>());
 						shelf.getPages().get(page).put(line, text);
 					}
+					set = stmt.executeQuery("SELECT * FROM [Locks] " + 
+											"WHERE [ShelfID] = " + shelf.getID());
+					while(set.next())
+					{
+						String type = set.getString("Type");
+						String player = set.getString("Player");
+						if(type.equals("write"))
+							shelf.addWriter(player);
+						else if(type.equals("read"))
+							shelf.addReader(player);
+					}
 	    		}
 			} catch (SQLException e) 
 			{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error performing getShelf", e);	}
 	    	return shelf;
 	    }
 	    
-	    public static boolean editShelf(AdvShelf shelf)
+	    public static boolean writeShelf(AdvShelf shelf)
 	    {
 	    	if(!shelfExists(shelf))
 	    		return insertShelf(shelf);
@@ -165,6 +154,7 @@ public class ssDBAccess
 	    
 	    private static boolean insertShelf(AdvShelf shelf)
 	    {
+	    	boolean ok = false;
 	    	Statement stmt = null;
 	    	ResultSet set = null;
 			try 
@@ -175,12 +165,17 @@ public class ssDBAccess
 					"VALUES(NULL, '" + shelf.getWorld() + "', " + 
 					shelf.getX() + ", " + shelf.getY() + ", " + shelf.getZ() + 
 					", '" + shelf.getOwner() + "', '" + shelf.getModifier() + "', " +
-					(int)(shelf.isBreakable()?1:0) + ")";
+					(int)(shelf.isBreakable()?1:0) + ", " + 
+					(int)(shelf.canWrite("")?1:0) + ", " +
+					(int)(shelf.canRead("")?1:0) + ")";
 				stmt.executeUpdate(query);
 				conn.commit();
 				shelf.setID(getShelfID(shelf));
 				if(shelf.getID() != 0)
-					return insertMessage(shelf);
+				{
+					ok &= insertMessage(shelf);
+					ok &= insertLocks(shelf);
+				}
 				else
 					ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error on insertShelf, getShelfID returned 0");
 			} 
@@ -199,11 +194,12 @@ public class ssDBAccess
 				{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error closing insertShelf", e);	}
 				
 			}
-			return false;
+			return ok;
 	    }
 	    
 	    private static boolean updateShelf(AdvShelf shelf)
 	    {
+	    	boolean ok = false;
 	    	Statement stmt = null;
 	    	shelf.setID(getShelfID(shelf));
 	    	if(shelf.getID() != 0)
@@ -213,10 +209,16 @@ public class ssDBAccess
 					stmt = conn.createStatement();
 					stmt.executeUpdate("UPDATE [Shelves] SET [Owner] = '" + shelf.getOwner() + "', " +
 							"[Modifier] = '" + shelf.getModifier() + 
-							"', [Breakable] = " + (int)(shelf.isBreakable()?1:0));
+							"', [Breakable] = " + (int)(shelf.isBreakable()?1:0) + 
+							", [Writable] = " + (int)(shelf.canWrite("")?1:0) + 
+							", [Readable] = " + (int)(shelf.canRead("")?1:0) + 
+							" WHERE [ShelfID] = " + shelf.getID());
 					conn.commit();
-					clearMessage(shelf);
-					return insertMessage(shelf);
+					ok &= deleteMessage(shelf);
+					ok &= insertMessage(shelf);
+					ok &= deleteLocks(shelf);
+					if(shelf.getWriters() != null || shelf.getReaders() != null)
+						ok &= insertLocks(shelf);
 				} 
 		    	catch (SQLException e) 
 				{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error performing updateShelf", e);	}
@@ -233,7 +235,7 @@ public class ssDBAccess
 	    	}
 	    	else
 	    		ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error on updateShelf, getShelfID returned 0");
-	    	return false;
+	    	return ok;
 	    }
 	    
 	    public static boolean deleteShelf(AdvShelf shelf)
@@ -245,7 +247,8 @@ public class ssDBAccess
 	    		if(shelf.getID() != 0)
 	    		{
 					stmt = conn.createStatement();
-					clearMessage(shelf);
+					deleteMessage(shelf);
+					deleteLocks(shelf);
 					stmt.executeUpdate("DELETE FROM [Shelves] " +
 										"WHERE [ShelfID] = " + shelf.getID());
 					conn.commit();
@@ -278,11 +281,13 @@ public class ssDBAccess
 				stmt = conn.createStatement();
 				Set<?> pages = shelf.getPages().entrySet();
 				Iterator<?> i1 = pages.iterator();
+				// Iterate existing pages
 				while(i1.hasNext()) {
 					Map.Entry me1 = (Map.Entry)i1.next();
 					int page = (Integer)me1.getKey();
 					Set lines = ((HashMap) me1.getValue()).entrySet();
 					Iterator i2 = lines.iterator();
+					// Iterate existing lines
 					while(i2.hasNext()) {
 						Map.Entry me2 = (Map.Entry)i2.next();
 						int line = (Integer)me2.getKey();
@@ -310,7 +315,7 @@ public class ssDBAccess
 	    	return false;
 	    }
 	    
-	    public static boolean clearMessage(AdvShelf shelf)
+	    public static boolean deleteMessage(AdvShelf shelf)
 	    {
 	    	Statement stmt = null;
 	    	try 
@@ -324,7 +329,7 @@ public class ssDBAccess
 				return true;
 			} 
 	    	catch (SQLException e) 
-			{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error performing clearMessage", e);	}
+			{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error performing deleteMessage", e);	}
 	    	finally
 	    	{
 	    		try 
@@ -333,12 +338,79 @@ public class ssDBAccess
 	    				stmt.close();
 				} 
 	    		catch (SQLException e) 
-				{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error closing clearMessage", e);	}
+				{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error closing deleteMessage", e);	}
 	    	}
 	    	
 	    	return false;
 	    }
 	     
+	    public static boolean insertLocks(AdvShelf shelf)
+	    {
+	    	Statement stmt = null;
+	    	try 
+	    	{
+	    		if(shelf.getID() == 0)
+					shelf.setID(getShelfID(shelf));
+				stmt = conn.createStatement();
+				if(shelf.getWriters() != null)
+					for(String player : shelf.getWriters())
+					{
+						stmt.executeUpdate("INSERT INTO [Locks] " +
+								"VALUES(" + shelf.getID() + ", 'write', '" + player + "')");
+					}
+				if(shelf.getReaders() != null)
+					for(String player : shelf.getReaders())
+					{
+						stmt.executeUpdate("INSERT INTO [Locks] " +
+							"VALUES(" + shelf.getID() + ", 'read', '" + player + "')");
+					}
+				conn.commit();
+				return true;
+			} 
+	    	catch (SQLException e) 
+			{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error performing insertLocks", e);	}
+	    	finally
+	    	{
+	    		try 
+	    		{
+					if(stmt != null)
+	    				stmt.close();
+				} 
+	    		catch (SQLException e) 
+	    		{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error closing insertLocks", e);	}
+	    	}
+	    	return false;
+	    }
+	    
+	    public static boolean deleteLocks(AdvShelf shelf)
+	    {
+	    	Statement stmt = null;
+	    	try 
+	    	{
+				stmt = conn.createStatement();
+				if(shelf.getID() == 0)
+					shelf.setID(getShelfID(shelf));
+				stmt.executeUpdate("DELETE FROM [Locks] " + 
+								   "WHERE [ShelfID] = " + shelf.getID());
+				conn.commit();
+				return true;
+			} 
+	    	catch (SQLException e) 
+			{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error performing deleteLocks", e);	}
+	    	finally
+	    	{
+	    		try 
+	    		{
+	    			if(stmt != null)
+	    				stmt.close();
+				} 
+	    		catch (SQLException e) 
+				{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error closing deleteLocks", e);	}
+	    	}
+	    	
+	    	return false;
+	    }
+	    
 	    public static boolean tableExists(String tableName) {
 	        ResultSet rs = null;
 	        try 
@@ -367,7 +439,7 @@ public class ssDBAccess
 	        return false;
 	    }
 	    
-	    public static boolean createTable(String query)
+	    public static boolean executeQuery(String query)
 	    {
 	    	Statement stmt = null;
 	        try {
@@ -376,16 +448,74 @@ public class ssDBAccess
 	            conn.commit();
 	            return true;
 	        } catch (SQLException e) {
-	            ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Create Table Exception", e);
+	            ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error performing executeQuery", e);
 	        } finally {
 	            try {
 	                if (stmt != null) {
 	                    stmt.close();
 	                }
 	            } catch (SQLException e) {
-	                ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Could not create table (on close)");
+	                ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error closing executeQuery");
 	            }
 	        }
 	        return false;
+	    }
+
+	    public static boolean setVersion(String version)
+	    {
+	    	Statement stmt = null;
+	    	try 
+	    	{
+				stmt = conn.createStatement();
+				int check = stmt.executeUpdate("UPDATE [DBInfo] SET [Version] = '" + version + "'");
+				if(check == 0)
+					stmt.executeUpdate("INSERT INTO [DBInfo]([Version]) VALUES(" + version + ")");
+				conn.commit();
+				return true;
+			} 
+	    	catch (SQLException e) 
+	    	{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error performing setVersion");	}
+	    	finally
+	    	{
+	    		try 
+	    		{	
+	    			if(stmt != null)
+	    				stmt.close();	
+	    		} 
+	    		catch (SQLException e) 
+				{	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Error closing setVersion");	}
+	    	}
+	    	return false;
+	    }
+	    
+	    public static String getVersion()
+	    {
+	    	String version = "0.1";
+	    	Statement stmt = null;
+	    	ResultSet set = null;
+	    	try 
+	    	{
+				stmt = conn.createStatement();
+				set = stmt.executeQuery("SELECT [Version] FROM DBInfo");
+				if(set.next())
+					version = set.getString("Version");
+			} 
+	    	catch (SQLException e) 
+	    	{
+	    		if(tableExists("Shelves"))
+	    		{	version = "0.2";	}
+	    	}
+	    	finally
+	    	{
+	    		try 
+	    		{
+	    			if(set != null)
+	    				set.close();
+	    			if(stmt != null)
+	    				stmt.close();
+				} 
+	    		catch (SQLException e) {}
+	    	}
+	    	return version;
 	    }
 }
