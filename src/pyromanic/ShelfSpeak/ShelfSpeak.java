@@ -71,6 +71,7 @@ public class ShelfSpeak extends JavaPlugin
         pm.registerEvent(Event.Type.BLOCK_PLACE, blockListener, Priority.Normal, this);
         pm.registerEvent(Event.Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
         pm.registerEvent(Event.Type.PLAYER_INTERACT, playerListener, Priority.Highest, this);
+        pm.registerEvent(Event.Type.PLAYER_MOVE, playerListener, Priority.Normal, this);
 
         // Register commands
         getCommand("shelf").setExecutor(new ShelfCommand(this));
@@ -104,34 +105,6 @@ public class ShelfSpeak extends JavaPlugin
             catch (IOException e) 
             {	log.log(Level.SEVERE, "[ShelfSpeak] Could not create database", e);	}
         }
-    }
-    
-    public static void showCommands(Player player)
-    {
-    	ssPermissions permission = ssPermissions.getInstance();
-    	player.sendMessage(ChatColor.DARK_AQUA + "**********ShelfSpeak***********");
-    	player.sendMessage(ChatColor.GREEN + "<Required> {Optional} [Choice]");
-		player.sendMessage(ChatColor.AQUA + "/shelf" + ChatColor.WHITE + " - View Commands");
-		if(permission.read(player) || permission.readAll(player))
-			player.sendMessage(ChatColor.AQUA + "/shelf <page>" + ChatColor.WHITE + " - View Shelf Page");
-		if(permission.colors(player))
-			player.sendMessage(ChatColor.AQUA + "/shelfcolors" + ChatColor.WHITE + " - List Color Codes");
-		if(permission.lockWrite(player) || permission.lockRead(player))
-		{
-			player.sendMessage(ChatColor.AQUA + "/shelflock [read:write] {player}" + ChatColor.WHITE + " - Toggle lock");
-			player.sendMessage(ChatColor.AQUA + "/shelflock [read:write] list" + ChatColor.WHITE + " - List Privs");
-		}
-		if(permission.write(player) || permission.writeAll(player))
-		{
-			player.sendMessage(ChatColor.AQUA + "/shelfwrite" + ChatColor.WHITE + " - Enter Write Mode");
-			player.sendMessage(ChatColor.DARK_AQUA + "*******Write Mode*********");
-			player.sendMessage(ChatColor.AQUA + "/shelfline {page:}<line> {text}" + ChatColor.WHITE + " - Set Line Text");
-			player.sendMessage(ChatColor.AQUA + "/shelfclear {page}" + ChatColor.WHITE + " - Clear Shelf or Page Text");
-			player.sendMessage(ChatColor.AQUA + "/shelfremove {page:}<line>" + ChatColor.WHITE + " - Remove a Line");
-			player.sendMessage(ChatColor.AQUA + "/shelfcancel" + ChatColor.WHITE + " - Cancel, End Write");
-			player.sendMessage(ChatColor.AQUA + "/shelfsave" + ChatColor.WHITE + " - Save, End Write");
-		}
-		player.sendMessage(ChatColor.DARK_AQUA + "********************************");
     }
     
     public static int[] parseLineArgs(String cmdArg)
@@ -170,12 +143,5 @@ public class ShelfSpeak extends JavaPlugin
 		else
 			ok = true;
 		return ok;
-    }
-
-    public static void disableWriteMode(Player player)
-    {
-    	player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] Write mode disabled.");
-		session.activeCmd.put(player, null);
-		session.activeShelf.put(player, null);
     }
 }

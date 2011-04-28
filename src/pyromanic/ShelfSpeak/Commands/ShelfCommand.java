@@ -35,11 +35,11 @@ public class ShelfCommand implements CommandExecutor
 		}
 		
 		if(split.length == 0)
-			ShelfSpeak.showCommands(player);
+			showCommands(player);
 		else if(split.length == 1)
 			if(split[0].matches("[1-" + AdvShelf.MAX_PAGES + "]"))
 				if(plugin.activeShelf.get(player) != null)
-    				AdvShelf.showPage(player, plugin.activeShelf.get(player), Integer.parseInt(split[0]));
+					plugin.activeShelf.get(player).showPage(player, Integer.parseInt(split[0]));
     			else
     			{
     				plugin.activeCmd.put(player, split[0]);
@@ -51,4 +51,32 @@ public class ShelfCommand implements CommandExecutor
 			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelf <page>");
 		return true;
 	}
+	
+	public static void showCommands(Player player)
+    {
+    	ssPermissions permission = ssPermissions.getInstance();
+    	player.sendMessage(ChatColor.DARK_AQUA + "**********ShelfSpeak***********");
+    	player.sendMessage(ChatColor.GREEN + "<Required> {Optional} [Choice]");
+		player.sendMessage(ChatColor.AQUA + "/shelf" + ChatColor.WHITE + " - View Commands");
+		if(permission.read(player) || permission.readAll(player))
+			player.sendMessage(ChatColor.AQUA + "/shelf <page>" + ChatColor.WHITE + " - View Shelf Page");
+		if(permission.colors(player))
+			player.sendMessage(ChatColor.AQUA + "/shelfcolors" + ChatColor.WHITE + " - List Color Codes");
+		if(permission.lockWrite(player) || permission.lockRead(player))
+		{
+			player.sendMessage(ChatColor.AQUA + "/shelflock [read:write] {player}" + ChatColor.WHITE + " - Toggle lock");
+			player.sendMessage(ChatColor.AQUA + "/shelflock [read:write] list" + ChatColor.WHITE + " - List Privs");
+		}
+		player.sendMessage(ChatColor.AQUA + "/shelfcancel" + ChatColor.WHITE + " - Cancel Active Command");
+		if(permission.write(player) || permission.writeAll(player))
+		{
+			player.sendMessage(ChatColor.AQUA + "/shelfwrite" + ChatColor.WHITE + " - Enter Write Mode");
+			player.sendMessage(ChatColor.DARK_AQUA + "*******Write Mode*********");
+			player.sendMessage(ChatColor.AQUA + "/shelfline {page:}<line> {text}" + ChatColor.WHITE + " - Set Line Text");
+			player.sendMessage(ChatColor.AQUA + "/shelfclear {page}" + ChatColor.WHITE + " - Clear Shelf or Page Text");
+			player.sendMessage(ChatColor.AQUA + "/shelfremove {page:}<line>" + ChatColor.WHITE + " - Remove a Line");
+			player.sendMessage(ChatColor.AQUA + "/shelfsave" + ChatColor.WHITE + " - Save, End Write");
+		}
+		player.sendMessage(ChatColor.DARK_AQUA + "********************************");
+    }
 }

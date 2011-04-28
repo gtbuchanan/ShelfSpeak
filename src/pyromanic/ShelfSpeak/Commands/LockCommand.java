@@ -35,62 +35,29 @@ public class LockCommand implements CommandExecutor
 				&& (split[0].equalsIgnoreCase("read") || 
 						split[0].equalsIgnoreCase("write")))
 		{
+			split[0] = split[0].toLowerCase();	// 1st arg to lower for quick comparison
 			if(!permission.lockRead(player) || !permission.lockWrite(player))
 			{
 				player.sendMessage(ChatColor.RED + "[ShelfSpeak] You do not have permission to use that lock.");
 				return true;
 			}
-			String type = split[0].toLowerCase();
-			// Begin interactive mode if user has no active shelf
-			if(shelf == null)
+			if(shelf == null)	// Begin interactive mode if user has no active shelf
 			{
 				if(split.length == 1 || (split.length == 2 && !split[1].equalsIgnoreCase("list")))
 				{
 					plugin.activeCmd.put(player, "lock:" + 
-							type + ":" + ((split.length == 2) ? split[1] : ""));
+							split[0] + ":" + ((split.length == 2) ? split[1] : ""));
 					player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] Right click the shelf you wish to lock.");
 				}
 				else if(split.length == 2 && split[1].equalsIgnoreCase("list"))
 				{
-					plugin.activeCmd.put(player, "lock:" + type + ":list");
+					plugin.activeCmd.put(player, "lock:" + split[0] + ":list");
 					player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] Right click the shelf you wish to view locks for.");
 				}
 			}
 			else
 			{
-				if(!player.getName().equalsIgnoreCase(shelf.getOwner()))
-				{
-					player.sendMessage(ChatColor.RED + "[ShelfSpeak] You must be the owner to use locks.");
-					return true;
-				}
-				if(split.length == 1)
-				{
-					// Set shelf read/write lock
-					boolean locked = false;
-					if(type.equalsIgnoreCase("read"))
-						locked = shelf.setReadable(!shelf.canRead(""));
-					else
-						locked = shelf.setWritable(!shelf.canWrite(""));
-					player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] " + 
-							(locked ? "Locked " : "Unlocked ") + type);
-				}
-				else if(split.length == 2)
-				{
-					// Show read/write priv list of players
-					if(split[1].equalsIgnoreCase("list"))
-						shelf.showLocks(player, type);
-					else
-					{
-						boolean granted = false;
-						if(type.equalsIgnoreCase("read"))
-							granted = shelf.addReader(split[1]);
-						else
-							granted = shelf.addWriter(split[1]);
-						player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] " + 
-								(granted ? "Granted " : "Revoked ") + type + 
-								": " + ChatColor.GREEN + split[1]);
-					}
-				}
+				performLock(player, shelf, split);
 			}
 		}
 		else
@@ -101,4 +68,43 @@ public class LockCommand implements CommandExecutor
 		}
 		return true;
 	}
+	
+	public static void performLock(Player player, AdvShelf shelf, String[] args)
+	{
+		ssPermissions permission = ssPermissions.getInstance();
+		if(!shelf.isOwner(player) && !permission.lockAll(player))
+		{
+			player.sendMessage(ChatColor.RED + "[ShelfSpeak] You must be the owner to use locks.");
+			return;
+		}
+		if(args.length == 1)	// Full lock
+		{
+			// Set shelf read/write lock
+			boolean locked = false;
+			if(args[0].equals("read"))
+				locked = shelf.setReadable(!shelf.canRead(""));
+			else
+				locked = shelf.setWritable(!shelf.canWrite(""));
+			player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] " + 
+					(locked ? "Locked " : "Unlocked ") + args[0]);
+		}
+		else if(args.length == 2)	// View list or Grant/revoke user priv
+		{
+			// Show read/write priv list of players
+			if(args[1].equalsIgnoreCase("list"))
+				shelf.showLocks(player, args[0]);
+			else
+			{
+				boolean granted = false;
+				if(args[0].equals("read"))
+					granted = shelf.addReader(args[1]);
+				else if(args[0].equals("write"))
+					granted = shelf.addWriter(args[1]);
+				player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] " + 
+						(granted ? "Granted " : "Revoked ") + args[0] + 
+						": " + ChatColor.GREEN + args[1]);
+			}
+		}
+	}
+
 }

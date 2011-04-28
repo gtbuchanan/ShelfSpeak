@@ -33,10 +33,10 @@ public class SaveCommand implements CommandExecutor
 			{
 				shelf.save();
 				player.sendMessage(ChatColor.AQUA + "[ShelfSpeak] Shelf Saved!");
-				ShelfSpeak.disableWriteMode(player);
+				WriteCommand.disableWriteMode(player);
 			}
 			else
-				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfend");
+				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfsave");
 		}
 		else
 			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] You must be in write mode to use this command.");

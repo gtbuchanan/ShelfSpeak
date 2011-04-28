@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Set;
@@ -120,6 +121,9 @@ public class AdvShelf
 	public boolean hasOwner()
 	{	return !(_owner == null || _owner.length() == 0);	}
 	
+	public boolean isOwner(Player player)
+	{	return _owner.equalsIgnoreCase(player.getName());	}
+	
 	public String getModifier()
 	{	return _mod;	}
 	
@@ -143,9 +147,9 @@ public class AdvShelf
 	public int getMaxPage()
 	{
 		Set<Integer> keys = _pages.keySet();
-		Object[] pageNos = keys.toArray();
-		Arrays.sort(pageNos);
-		return (pageNos.length == 0) ? 0 : (Integer)pageNos[pageNos.length - 1];
+		Integer[] pageNos = keys.toArray(new Integer[keys.size()]);
+		Arrays.sort(pageNos, Collections.reverseOrder());
+		return (pageNos.length == 0) ? 0 : pageNos[0];
 	}
 	
 	public int getMaxLine(int page)
@@ -154,9 +158,9 @@ public class AdvShelf
 		if(lines != null)
 		{
 			Set<Integer> keys = lines.keySet();
-			Object[] lineNos = keys.toArray();
-			Arrays.sort(lineNos);
-			return (lineNos.length == 0) ? 0 : (Integer)lineNos[lineNos.length - 1];
+			Integer[] lineNos = keys.toArray(new Integer[keys.size()]);
+			Arrays.sort(lineNos, Collections.reverseOrder());
+			return (lineNos.length == 0) ? 0 : lineNos[0];
 		}
 		return 0;
 	}
@@ -177,7 +181,6 @@ public class AdvShelf
 	
 	public boolean addWriter(String playerName)
 	{
-		playerName = playerName.toLowerCase();
 		if(_writers == null)
 			setWritable(false);
 		if(!_writers.contains(playerName))
@@ -194,8 +197,8 @@ public class AdvShelf
 	
 	public boolean canRead(String playerName)
 	{	return (_readers == null 
-			|| (_readers != null && _readers.contains(playerName.toLowerCase()))
-			|| playerName.equalsIgnoreCase(_owner));	}
+			|| (_readers != null && _readers.contains(playerName))
+			|| playerName.equals(_owner));	}
 	
 	public boolean setReadable(boolean decision)
 	{	
@@ -208,7 +211,6 @@ public class AdvShelf
 	
 	public boolean addReader(String playerName)
 	{
-		playerName = playerName.toLowerCase();
 		if(_readers == null)
 			setReadable(false);
 		if(!_readers.contains(playerName))
@@ -344,20 +346,19 @@ public class AdvShelf
 		return f.exists();
 	}
 
-	public static void showPage(Player player, AdvShelf shelf, int page)
+	public void showPage(Player player, int page)
     {
-    	HashMap<Integer, HashMap<Integer, String>> pages = shelf.getPages();
-    	
-    	if(!ssPermissions.getInstance().read(player))
+		ssPermissions permission = ssPermissions.getInstance();
+    	if(!permission.read(player))
 	    	player.sendMessage(ChatColor.RED + "[ShelfSpeak] You do not have permission to read.");
-    	else if(!shelf.canRead(player.getName()) && !ssPermissions.getInstance().readAll(player))
+    	else if(!canRead(player.getName()) && !permission.readAll(player))
     		player.sendMessage(ChatColor.RED + "[ShelfSpeak] The owner has not granted you read permissions.");
-    	else if(!shelf.hasOwner())
+    	else if(!hasOwner())
     		player.sendMessage(ChatColor.DARK_AQUA + "The Bookshelf seems to be empty...");
-    	else if(!shelf.hasPages() && ShelfSpeak.session.activeCmd.get(player) == null)
+    	else if(!hasPages() && ShelfSpeak.session.activeCmd.get(player) == null)
     		player.sendMessage(ChatColor.DARK_AQUA + "The Bookshelf is filled with " + 
-    				ChatColor.GREEN + shelf.getOwner() + ChatColor.DARK_AQUA + "'s books!");
-    	else if(page > shelf.getMaxPage())
+    				ChatColor.GREEN + getOwner() + ChatColor.DARK_AQUA + "'s books!");
+    	else if(page > getMaxPage())
     		player.sendMessage(ChatColor.RED + "[ShelfSpeak] Page " + page + " does not exist yet.");
     	else
     	{
@@ -365,12 +366,12 @@ public class AdvShelf
 	    			String.format("********" + ChatColor.GREEN + "%1$s" + ChatColor.DARK_AQUA + 
 	    					"'s BookShelf - Page: " + ChatColor.GREEN + 
 	    					"%2$s of %3$s" + ChatColor.DARK_AQUA + "********", 
-	    					shelf.getOwner(), page, shelf.getMaxPage()));
+	    					_owner, page, getMaxPage()));
 	    	
-	    	if(pages.containsKey(page) && pages.get(page).size() > 0)
+	    	if(_pages.containsKey(page) && _pages.get(page).size() > 0)
 	    	{
-	    		HashMap<Integer, String> lines = shelf.getPages().get(page);
-	    		for(int x = 1; x <= shelf.getMaxLine(page); x++)
+	    		HashMap<Integer, String> lines = _pages.get(page);
+	    		for(int x = 1; x <= getMaxLine(page); x++)
 	    		{
 	    			String line = "";
 	    			if(lines.containsKey(x))
@@ -381,7 +382,7 @@ public class AdvShelf
 	    	else
 	    		player.sendMessage("Page " + page + " contains no text.");
 			player.sendMessage(ChatColor.DARK_AQUA + "**********Last Modified By: " + ChatColor.GREEN +
-					(shelf.hasModifier() ? shelf.getModifier() : "N/A") + ChatColor.DARK_AQUA +  "**********");
+					(hasModifier() ? _mod : "N/A") + ChatColor.DARK_AQUA +  "**********");
     	}
     }
 
@@ -400,7 +401,7 @@ public class AdvShelf
 				for(int x = 0; x<locks.size(); x++)
 				{
 					player.sendMessage(ChatColor.DARK_AQUA + "" + (x+1) + ": " + 
-							ChatColor.AQUA + locks.get(x));
+							ChatColor.GREEN + locks.get(x));
 				}
 			else
 				player.sendMessage(ChatColor.AQUA + "No privs have been added.");

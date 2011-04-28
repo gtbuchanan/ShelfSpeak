@@ -1,14 +1,21 @@
 package pyromanic.ShelfSpeak;
 
+import java.util.ArrayList;
+
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.block.Block;
 import org.bukkit.Material;
+
+import pyromanic.ShelfSpeak.Commands.LockCommand;
+import pyromanic.ShelfSpeak.Commands.WriteCommand;
 
 /**
  * Handle all Player related events
@@ -28,16 +35,32 @@ public class ssPlayerListener extends PlayerListener
     	String activeCmd = plugin.activeCmd.get(player);
     	AdvShelf activeShelf = plugin.activeShelf.get(player);
     	
+    	/*
+    	 * Handle Interactive Mode
+    	 */
+    	// End if isn't Right_Click
 		if(event.getAction() != Action.RIGHT_CLICK_BLOCK)
 			return;
-		else if(activeCmd == "write" && activeShelf != null 
-				&& activeShelf.getBlock() != block && block.getType() == Material.BOOKSHELF)
-			player.sendMessage(ChatColor.RED + "[ShelfSpeak] You must end your write first.");
-		else if((activeCmd != null && activeShelf == null) 
+		// Inform if writing and block isn't Bookshelf
+		else if((activeCmd != null && activeShelf == null) 	
 				&& block.getType() != Material.BOOKSHELF)
 			player.sendMessage(ChatColor.RED + "[ShelfSpeak] That isn't a Bookshelf.");
-		else if(block.getType() != Material.BOOKSHELF)
+		// End if not writing and block isn't Bookshelf
+		else if(block.getType() != Material.BOOKSHELF)		
 			return;
+		// Inform if user clicks another Bookshelf
+		else if(activeCmd != null && activeCmd.equals("write") && activeShelf != null 
+				&& activeShelf.getBlock() != block)			
+			player.sendMessage(ChatColor.RED + "[ShelfSpeak] You must end your write first.");
+		// Write command
+		else if(activeCmd != null && activeCmd.equals("write") && activeShelf == null)	
+		{
+			AdvShelf shelf = new AdvShelf(block.getLocation());
+			if(shelf.exists())
+				shelf.load();
+			WriteCommand.startWriteMode(player, shelf);
+		}
+		// Lock command
 		else if(activeCmd != null && activeCmd.startsWith("lock"))
 		{
 			String[] cmd = activeCmd.split(":");
@@ -45,50 +68,19 @@ public class ssPlayerListener extends PlayerListener
 			if(shelf.exists())
 				shelf.load();
 			if(!shelf.hasOwner())
-			{
 				player.sendMessage(ChatColor.RED + "[ShelfSpeak] Use '/shelfwrite' to take ownership first.");
-				return;
-			}
-			else if(!player.getName().equalsIgnoreCase(shelf.getOwner()))
+			else
 			{
-				player.sendMessage(ChatColor.RED + "[ShelfSpeak] You must be the owner to use locks.");
+				ArrayList<String> args = new ArrayList<String>();
+				for(int x=1; x<cmd.length; x++)
+					args.add(cmd[x]);
+				LockCommand.performLock(player, shelf, args.toArray(new String[args.size()]));
+				shelf.save();
 				plugin.activeCmd.put(player, null);
-				return;
 			}
-			if(cmd.length == 2)
-			{
-				// Set shelf read/write lock
-				boolean locked = false;
-				if(cmd[1].equals("read"))
-					locked = shelf.setReadable(!shelf.canRead(""));
-				else
-					locked = shelf.setWritable(!shelf.canWrite(""));
-				player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] " + 
-						(locked ? "Locked " : "Unlocked ") + cmd[1]);
-			}
-			else if(cmd.length == 3)
-			{
-				// Show read/write priv list of players
-				if(cmd[2].equals("list"))
-					shelf.showLocks(player, cmd[1]);
-				else
-				{
-					boolean granted = false;
-					if(cmd[1].equals("read"))
-						granted = shelf.addReader(cmd[2]);
-					else
-						granted = shelf.addWriter(cmd[2]);
-					player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] " + 
-							(granted ? "Granted " : "Revoked ") + cmd[1] + 
-							": " + ChatColor.GREEN + cmd[2]);
-				}
-			}
-			shelf.save();
-			plugin.activeCmd.put(player, null);
 		}
 		else
 		{
-			// Load shelf
 			AdvShelf shelf = new AdvShelf(block.getLocation());
 			if(shelf.exists())
 				shelf.load();
@@ -100,34 +92,31 @@ public class ssPlayerListener extends PlayerListener
 				if(activeCmd != null && activeCmd.matches("[1-" + AdvShelf.MAX_PAGES + "]"))
 					page = Integer.parseInt(activeCmd);
 				if(activeShelf != null && activeShelf.isAt(shelf.getLocation()))
-					AdvShelf.showPage(player, activeShelf, page);
+					activeShelf.showPage(player, page);
 				else
 				{
-					AdvShelf.showPage(player, shelf, page);
+					shelf.showPage(player, page);
 					plugin.activeCmd.put(player, null);
-				}
-			}
-			else if(activeCmd == "write" && activeShelf == null)
-			{
-				if(!shelf.hasOwner() || shelf.canWrite(player.getName()))
-				{
-					if(!shelf.hasOwner())
-					{
-						shelf.setOwner(player.getName());
-						player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] You took ownership of the Bookshelf!");
-					}
-					shelf.setModifier(player.getName());
-					shelf.save();
-					plugin.activeShelf.put(player, shelf);
-					player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] Write mode enabled!");
-				}
-				else if(!shelf.canWrite(player.getName()) && !ssPermissions.getInstance().writeAll(player))
-				{
-					plugin.activeCmd.put(player, null);
-					player.sendMessage(ChatColor.RED + "[ShelfSpeak] The owner has not granted you write permissions.");
 				}
 			}
 		}
+    }
+    
+    public void onPlayerMove(PlayerMoveEvent event)
+    {
+    	Player player = event.getPlayer();
+    	Location loc = event.getTo();
+    	AdvShelf shelf = plugin.activeShelf.get(player);
+    	int radius = ssPermissions.getInstance().maxRadius(player);
+    	
+    	if(shelf != null)
+    		if(Math.abs(shelf.getX() - loc.getX()) >= radius 
+    				|| Math.abs(shelf.getY() - loc.getY()) >= radius
+    				|| Math.abs(shelf.getZ() - loc.getZ()) >= radius)
+    		{
+    			player.sendMessage(ChatColor.RED + "[ShelfSpeak] Max radius exceeded.");
+    			player.performCommand("shelfcancel");
+    		}
     }
     
     public void onPlayerJoin(PlayerJoinEvent event)

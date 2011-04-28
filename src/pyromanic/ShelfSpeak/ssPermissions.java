@@ -98,6 +98,30 @@ public class ssPermissions
     		return false;
     }
     
+    public boolean lockAll(Player player)
+    {
+    	if (enabled)
+    		return permission(player, "shelfspeak.admin.lockall");
+    	else if(player.isOp())
+    		return true;
+    	else
+    		return false;
+    }
+    
+    @SuppressWarnings("static-access")
+	public int maxRadius(Player player)
+    {
+    	int radius = 0;
+    	if(enabled)
+    		radius = permissionsPlugin.Security.getPermissionInteger(
+    					player.getWorld().getName(), 
+    					player.getName(), 
+    					"shelfspeakmaxradius");
+    	if(radius <= 0)
+    		radius = 5;
+    	return radius;
+    }
+    
     /*
     @SuppressWarnings("static-access")
 	public int maxLines(Player player)
@@ -123,7 +147,7 @@ public class ssPermissions
     					player.getName(), 
     					"shelfspeakmaxpages");
     	if(count <= 0)
-    		count = 5
+    		count = 5;
     	return count;
     }
     
@@ -136,9 +160,7 @@ public class ssPermissions
     	else
     		return false;
     }
-    */
-    
-    /*
+
     public boolean breakAll(Player player)
     {
     	if (enabled)

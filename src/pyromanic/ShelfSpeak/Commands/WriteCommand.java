@@ -6,6 +6,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import pyromanic.ShelfSpeak.AdvShelf;
 import pyromanic.ShelfSpeak.ShelfSpeak;
 import pyromanic.ShelfSpeak.ssPermissions;
 
@@ -26,9 +27,9 @@ public class WriteCommand implements CommandExecutor
 			String label, String[] split) 
 	{
 		Player player = (Player)sender;
+		ssPermissions permission = ssPermissions.getInstance();
 		
-		if(!ssPermissions.getInstance().write(player) 
-				&& !ssPermissions.getInstance().writeAll(player))
+		if(!permission.write(player) && !permission.writeAll(player))
 		{
 			player.sendMessage(ChatColor.RED + "[ShelfSpeak] You do not have permission to write.");
 			return true;
@@ -46,4 +47,30 @@ public class WriteCommand implements CommandExecutor
 			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfwrite");
 		return true;
 	}
+	
+	public static void startWriteMode(Player player, AdvShelf shelf)
+	{
+		if(!shelf.hasOwner() || shelf.canWrite(player.getName()) 
+				|| ssPermissions.getInstance().writeAll(player))
+		{
+			if(!shelf.hasOwner())
+			{
+				shelf.setOwner(player.getName());
+				player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] You took ownership of the Bookshelf!");
+			}
+			shelf.setModifier(player.getName());
+			shelf.save();
+			ShelfSpeak.session.activeShelf.put(player, shelf);
+			player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] Write mode enabled!");
+		}
+		else
+			player.sendMessage(ChatColor.RED + "[ShelfSpeak] The owner has not granted you write permissions.");
+	}
+	
+	public static void disableWriteMode(Player player)
+    {
+    	player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] Write mode disabled.");
+		ShelfSpeak.session.activeCmd.put(player, null);
+		ShelfSpeak.session.activeShelf.put(player, null);
+    }
 }

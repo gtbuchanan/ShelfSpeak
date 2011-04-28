@@ -25,16 +25,23 @@ public class CancelCommand implements CommandExecutor
 			String label, String[] split) 
 	{
 		Player player = (Player)sender;
-		if(plugin.activeCmd.get(player) == "write")
-			if(split.length == 0)
+		
+		if(split.length == 0)
+		{
+			if(plugin.activeCmd.get(player) == "write")
 			{
 				player.sendMessage(ChatColor.RED + "[ShelfSpeak] Changes discarded.");
-				ShelfSpeak.disableWriteMode(player);
+				WriteCommand.disableWriteMode(player);
 			}
-			else
-				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfcancel");
+			else if(plugin.activeCmd.get(player) != null)
+			{
+				plugin.activeCmd.put(player, null);
+				plugin.activeShelf.put(player, null);
+				player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] Active Command Cancelled.");
+			}
+		}
 		else
-			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] You must be in write mode to use this command.");
+			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfcancel");
 		return true;
 	}
 }

@@ -164,7 +164,8 @@ public class ssDBAccess
 					"INSERT INTO [Shelves] " + 
 					"VALUES(NULL, '" + shelf.getWorld() + "', " + 
 					shelf.getX() + ", " + shelf.getY() + ", " + shelf.getZ() + 
-					", '" + shelf.getOwner() + "', '" + shelf.getModifier() + "', " +
+					", '" + shelf.getOwner().replace("'", "''") + 
+					"', '" + shelf.getModifier().replace("'", "''") + "', " +
 					(int)(shelf.isBreakable()?1:0) + ", " + 
 					(int)(shelf.canWrite("")?1:0) + ", " +
 					(int)(shelf.canRead("")?1:0) + ")";
@@ -207,8 +208,9 @@ public class ssDBAccess
 		    	try 
 		    	{
 					stmt = conn.createStatement();
-					stmt.executeUpdate("UPDATE [Shelves] SET [Owner] = '" + shelf.getOwner() + "', " +
-							"[Modifier] = '" + shelf.getModifier() + 
+					stmt.executeUpdate("UPDATE [Shelves] SET [Owner] = '" + 
+							shelf.getOwner().replace("'", "''") + "', " +
+							"[Modifier] = '" + shelf.getModifier().replace("'", "''") + 
 							"', [Breakable] = " + (int)(shelf.isBreakable()?1:0) + 
 							", [Writable] = " + (int)(shelf.canWrite("")?1:0) + 
 							", [Readable] = " + (int)(shelf.canRead("")?1:0) + 
@@ -272,7 +274,7 @@ public class ssDBAccess
 	    	return false;
 	    }
 	    
-	    @SuppressWarnings("rawtypes")
+		@SuppressWarnings("rawtypes")
 		public static boolean insertMessage(AdvShelf shelf)
 	    {
 	    	Statement stmt = null;
@@ -291,7 +293,7 @@ public class ssDBAccess
 					while(i2.hasNext()) {
 						Map.Entry me2 = (Map.Entry)i2.next();
 						int line = (Integer)me2.getKey();
-						String text = me2.getValue().toString();
+						String text = me2.getValue().toString().replace("'", "''");
 						stmt.executeUpdate("INSERT INTO [Messages] " +
 								"VALUES(" + shelf.getID() + ", " + page + ", " + 
 								line + ", '" + text + "')");
@@ -356,13 +358,15 @@ public class ssDBAccess
 					for(String player : shelf.getWriters())
 					{
 						stmt.executeUpdate("INSERT INTO [Locks] " +
-								"VALUES(" + shelf.getID() + ", 'write', '" + player + "')");
+								"VALUES(" + shelf.getID() + ", 'write', '" + 
+								player.replace("'", "''") + "')");
 					}
 				if(shelf.getReaders() != null)
 					for(String player : shelf.getReaders())
 					{
 						stmt.executeUpdate("INSERT INTO [Locks] " +
-							"VALUES(" + shelf.getID() + ", 'read', '" + player + "')");
+							"VALUES(" + shelf.getID() + ", 'read', '" + 
+							player.replace("'", "''") + "')");
 					}
 				conn.commit();
 				return true;
