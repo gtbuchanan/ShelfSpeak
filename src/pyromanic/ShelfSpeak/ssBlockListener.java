@@ -30,11 +30,11 @@ public class ssBlockListener extends BlockListener
     		event.setCancelled(true);
     		return;
     	}
-    	if(block.getType() == Material.BOOKSHELF && plugin.isEnabled())
+    	if(block.getType() == Material.BOOKSHELF)
     	{
     		AdvShelf shelf = new AdvShelf(block.getLocation());
     		shelf.setOwner(player.getName());
-    		//player.sendMessage("You placed a bookshelf.");
+    		shelf.setModifier(player.getName());
     		shelf.save();
     	}
     }
@@ -44,7 +44,7 @@ public class ssBlockListener extends BlockListener
     	Player player = event.getPlayer();
     	Block block = event.getBlock();
     	
-    	if(block.getType() == Material.BOOKSHELF && plugin.isEnabled())
+    	if(block.getType() == Material.BOOKSHELF)
     	{
     		AdvShelf shelf = new AdvShelf(block.getLocation());
     		if(shelf.delete())

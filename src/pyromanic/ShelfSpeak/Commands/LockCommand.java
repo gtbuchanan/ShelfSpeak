@@ -36,7 +36,8 @@ public class LockCommand implements CommandExecutor
 						split[0].equalsIgnoreCase("write")))
 		{
 			split[0] = split[0].toLowerCase();	// 1st arg to lower for quick comparison
-			if(!permission.lockRead(player) || !permission.lockWrite(player))
+			if((split[0].equalsIgnoreCase("read") && !permission.lockRead(player)) 
+					|| (split[0].equalsIgnoreCase("write") && !permission.lockWrite(player)))
 			{
 				player.sendMessage(ChatColor.RED + "[ShelfSpeak] You do not have permission to use that lock.");
 				return true;

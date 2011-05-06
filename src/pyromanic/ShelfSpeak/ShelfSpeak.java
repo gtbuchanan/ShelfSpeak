@@ -3,8 +3,8 @@ package pyromanic.ShelfSpeak;
  * Developer:
  * 		pyromanic
  * Libraries:
- * 		Bukkit [668]
- * 		CraftBukkit [733]
+ * 		Bukkit [669]
+ * 		CraftBukkit [740]
  * 		Permissions [2.7]
  */
 
@@ -85,7 +85,7 @@ public class ShelfSpeak extends JavaPlugin
         getCommand("shelfsave").setExecutor(new SaveCommand(this));
         
         PluginDescriptionFile pdfFile = this.getDescription();
-        log.log(Level.INFO, "[" + pdfFile.getName() + "] Version " + pdfFile.getVersion() + " is enabled!");
+        log.log(Level.INFO, "[" + pdfFile.getName() + "] version " + pdfFile.getVersion() + " is enabled!");
     }
     
     public void onDisable() 
