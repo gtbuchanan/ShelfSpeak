@@ -6,7 +6,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import pyromanic.ShelfSpeak.AdvShelf;
+//import pyromanic.ShelfSpeak.AdvShelf;
 import pyromanic.ShelfSpeak.ShelfSpeak;
 import pyromanic.ShelfSpeak.ssPermissions;
 
@@ -37,7 +37,7 @@ public class ShelfCommand implements CommandExecutor
 		if(split.length == 0)
 			showCommands(player);
 		else if(split.length == 1)
-			if(split[0].matches("[1-" + AdvShelf.MAX_PAGES + "]"))
+			if(split[0].matches("(?=[^A-Za-z]+$).*[0-9].*")) // Player provided a number
 				if(plugin.activeShelf.get(player) != null)
 					plugin.activeShelf.get(player).showPage(player, Integer.parseInt(split[0]));
     			else
@@ -45,8 +45,6 @@ public class ShelfCommand implements CommandExecutor
     				plugin.activeCmd.put(player, split[0]);
     				player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] Right click the Bookshelf you wish to view.");
     			}
-			else
-				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Page must be 1-" + AdvShelf.MAX_PAGES);
 		else
 			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelf <page>");
 		return true;
@@ -75,6 +73,8 @@ public class ShelfCommand implements CommandExecutor
 			player.sendMessage(ChatColor.AQUA + "/shelfline {page:}<line> {text}" + ChatColor.WHITE + " - Set Line Text");
 			player.sendMessage(ChatColor.AQUA + "/shelfclear {page}" + ChatColor.WHITE + " - Clear Shelf or Page Text");
 			player.sendMessage(ChatColor.AQUA + "/shelfremove {page:}<line>" + ChatColor.WHITE + " - Remove a Line");
+			if(permission.importFile(player))
+				player.sendMessage(ChatColor.AQUA + "/shelfimport <file>" + ChatColor.WHITE + " - Import text file");
 			player.sendMessage(ChatColor.AQUA + "/shelfsave" + ChatColor.WHITE + " - Save, End Write");
 		}
 		player.sendMessage(ChatColor.DARK_AQUA + "********************************");

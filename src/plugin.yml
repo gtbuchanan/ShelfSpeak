@@ -1,6 +1,6 @@
 name: ShelfSpeak
 main: pyromanic.ShelfSpeak.ShelfSpeak
-version: 0.5
+version: 0.6
 commands:
      shelf:
           description:
@@ -24,6 +24,9 @@ commands:
           description:
           usage:
      shelfcancel:
+          description:
+          usage:
+     shelfimport:
           description:
           usage:
      shelfsave:

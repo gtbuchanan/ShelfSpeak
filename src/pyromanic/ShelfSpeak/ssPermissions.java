@@ -64,10 +64,8 @@ public class ssPermissions
     {
     	if (enabled)
     		return permission(player, "shelfspeak.lock.read");
-    	else if(player.isOp())
-    		return true;
     	else
-    		return false;
+    		return player.isOp();
     }
     
     public boolean lockWrite(Player player)
@@ -78,34 +76,39 @@ public class ssPermissions
     		return true;
     }
     
-    public boolean writeAll(Player player)
-    {
-    	if (enabled)
-    		return permission(player, "shelfspeak.admin.writeall");
-    	else if(player.isOp())
-    		return true;
-    	else
-    		return false;
-    }
-    
     public boolean readAll(Player player)
     {
     	if (enabled)
     		return permission(player, "shelfspeak.admin.readall");
-    	else if(player.isOp())
-    		return true;
     	else
-    		return false;
+    		return player.isOp();
+    }
+    
+    public boolean writeAll(Player player)
+    {
+    	if (enabled)
+    		return permission(player, "shelfspeak.admin.writeall");
+    	else
+    		return player.isOp();
     }
     
     public boolean lockAll(Player player)
     {
     	if (enabled)
     		return permission(player, "shelfspeak.admin.lockall");
-    	else if(player.isOp())
-    		return true;
     	else
-    		return false;
+    		return player.isOp();
+    }
+    
+    public boolean importFile(Player player)
+    {
+    	return false;
+    	/*
+    	if(enabled)
+    		return permission(player, "shelfspeak.admin.import");
+    	else 
+    		return player.isOp();
+    	*/
     }
     
     @SuppressWarnings("static-access")
@@ -117,12 +120,11 @@ public class ssPermissions
     					player.getWorld().getName(), 
     					player.getName(), 
     					"shelfspeakmaxradius");
-    	if(radius <= 0)
+    	if(radius < 0)
     		radius = 5;
     	return radius;
     }
     
-    /*
     @SuppressWarnings("static-access")
 	public int maxLines(Player player)
     {
@@ -133,7 +135,7 @@ public class ssPermissions
     					player.getName(), 
     					"shelfspeakmaxlines");
     	if(count <= 0)
-    		count = 10;
+    		count = 8;
     	return count;
     }
      
@@ -146,29 +148,28 @@ public class ssPermissions
     					player.getWorld().getName(), 
     					player.getName(), 
     					"shelfspeakmaxpages");
-    	if(count <= 0)
+    	if(count < 0)
     		count = 5;
+    	else if(count == 0)
+    		count = Integer.MAX_VALUE;
     	return count;
     }
     
+    /*
     public boolean unbreakable(Player player)
     {
     	if (enabled)
     		return permission(player, "shelfspeak.admin.unbreakable");
-    	else if(player.isOp())
-    		return true;
     	else
-    		return false;
+    		return player.isOp();
     }
 
     public boolean breakAll(Player player)
     {
     	if (enabled)
     		return permission(player, "shelfspeak.admin.breakall");
-    	else if(player.isOp())
-    		return true;
     	else
-    		return false;
+    		return player.isOp();
     }
     */
 }

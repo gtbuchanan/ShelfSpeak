@@ -40,7 +40,7 @@ public class ClearCommand implements CommandExecutor
 			else if(split.length == 1)
 			{
 				// Parse page number
-				int page = ShelfSpeak.parseLineArgs(split[0] + ":0")[0];
+				int page = ShelfSpeak.parseLineArgs(player, split[0] + ":0")[0];
     			if(ShelfSpeak.checkRanges(player, page, 1))
     				clearPage(player, shelf, page);
 			}

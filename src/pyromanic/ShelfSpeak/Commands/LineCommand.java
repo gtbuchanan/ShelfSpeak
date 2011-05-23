@@ -31,13 +31,13 @@ public class LineCommand implements CommandExecutor
 		if(plugin.activeCmd.get(player) == "write")
 			if(split.length >= 1)
 			{
-				int[] temp = ShelfSpeak.parseLineArgs(split[0]);
+				int[] temp = ShelfSpeak.parseLineArgs(player, split[0]);
     			int page = temp[0];
     			int line = temp[1];
     			
     			if(ShelfSpeak.checkRanges(player, page, line))
     			{
-					// Rebuild user specified text
+					// Rebuild user text
 					String output = "";
 					for(int x = 1; x < split.length; x++)
 						output += split[x] + ((x < split.length-1) ? " " : "");
@@ -51,7 +51,7 @@ public class LineCommand implements CommandExecutor
     			}
 			}
 			else
-				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfline {<page>:}<line> {text}");
+				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use /shelfline {<page>:}<line> {text}");
 		else
 			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] You must be in write mode to use this command.");
 		return true;

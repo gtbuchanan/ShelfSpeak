@@ -1,9 +1,12 @@
 package pyromanic.ShelfSpeak;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
+import java.io.FileReader;
 import java.io.IOException;
+//import java.io.FileWriter;
+//import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,8 +22,6 @@ import org.bukkit.entity.Player;
 
 public class AdvShelf
 {
-	public static final int MAX_PAGES = 5;
-	public static final int MAX_LINES = 10;
 	public static final int MAX_CHARS = 50;
 	
 	private int _id = 0;
@@ -276,12 +277,13 @@ public class AdvShelf
 		return worldPath + fileName;
 	}
 	
+	/*
 	private String buildString()
 	{
 		String output = (_owner == null ? "" : _owner) + "\r\n" + 
 						(_mod == null ? "" : _mod) + "\r\n";
 		if(_pages.containsKey(1))
-			for(int x=1; x <= MAX_LINES; x++)
+			for(int x=1; x <= 10; x++)
 				if(!_pages.get(1).containsKey(x))
 					output += "\r\n";
 				else
@@ -304,6 +306,7 @@ public class AdvShelf
 		writer.write(output);
 		writer.close();	
 	}
+	*/
 	
 	public void loadFromFile() throws FileNotFoundException
 	{
@@ -326,7 +329,55 @@ public class AdvShelf
 		scan.close();
 		if(lines.size() > 0)
 			_pages.put(1, lines);
+	}
+	
+	public void loadFromFile(Player player, String path) throws IOException
+	{
+		BufferedReader reader = new BufferedReader(new FileReader(path));
+		ssPermissions p = ssPermissions.getInstance();
+		int MAX_PAGES = p.maxPages(player);
+		int MAX_LINES = p.maxLines(player);
+		int pageNo = 1, lineNo = 1;
+		HashMap<Integer, String> lines = new HashMap<Integer, String>();
+		StringBuilder current = new StringBuilder();
+		StringBuilder remaining = new StringBuilder();
+		String temp;
+		while((temp = reader.readLine()) != null)
+		{	remaining.append(temp);	}
+		reader.close();
 		
+		while (true) {
+			int space = 50 - current.length();
+			int i = remaining.indexOf(" ");
+			int len = (i != -1) ? i+1 : remaining.length();
+			if (len <= space) {
+				current.append(remaining.substring(0, len - 1));
+				remaining.delete(0, len - 1);
+				space -= len;
+			}
+			else {
+				lines.put(lineNo, current.toString());
+				lineNo++;
+			}
+			if (lineNo > MAX_LINES) {
+				_pages.put(pageNo, lines);
+				lineNo = 1;
+				pageNo++;
+			}
+			if (pageNo > MAX_PAGES) {
+				break;
+			}
+			if (remaining.length() == 0)
+			{
+				if (space < 50) {
+					lines.put(lineNo, current.toString());
+				}
+				if (lineNo <= MAX_LINES) {
+					_pages.put(pageNo, lines);
+				}
+				break;
+			}
+		}
 	}
 	
 	public boolean deleteFile()
@@ -349,6 +400,8 @@ public class AdvShelf
 	public void showPage(Player player, int page)
     {
 		ssPermissions permission = ssPermissions.getInstance();
+		if(page <= 0 || page > getMaxPage())
+			page = 1;
     	if(!permission.read(player))
 	    	player.sendMessage(ChatColor.RED + "[ShelfSpeak] You do not have permission to read.");
     	else if(!canRead(player.getName()) && !permission.readAll(player))
@@ -358,8 +411,6 @@ public class AdvShelf
     	else if(!hasPages() && ShelfSpeak.session.activeCmd.get(player) == null)
     		player.sendMessage(ChatColor.DARK_AQUA + "The Bookshelf is filled with " + 
     				ChatColor.GREEN + getOwner() + ChatColor.DARK_AQUA + "'s books!");
-    	else if(page > getMaxPage())
-    		player.sendMessage(ChatColor.RED + "[ShelfSpeak] Page " + page + " does not exist yet.");
     	else
     	{
 	    	player.sendMessage(ChatColor.DARK_AQUA + 
@@ -376,7 +427,7 @@ public class AdvShelf
 	    			String line = "";
 	    			if(lines.containsKey(x))
 	    				line = lines.get(x);
-	    			player.sendMessage(String.format("%02d", (x)) + ": " + line);
+	    			player.sendMessage(line);
 	    		}
 	    	}
 	    	else

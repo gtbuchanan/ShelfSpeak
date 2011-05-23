@@ -37,7 +37,7 @@ public class RemoveCommand implements CommandExecutor
 			AdvShelf shelf = plugin.activeShelf.get(player);
 			if(split.length == 1)
 			{
-				int[] temp = ShelfSpeak.parseLineArgs(split[0]);
+				int[] temp = ShelfSpeak.parseLineArgs(player, split[0]);
 				int page = temp[0];
 				int line = temp[1];
 				if(ShelfSpeak.checkRanges(player, page, line))

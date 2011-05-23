@@ -1,7 +1,8 @@
 package pyromanic.ShelfSpeak;
 
+import org.bukkit.inventory.ItemStack;
+
 import org.bukkit.block.Block;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockListener;
@@ -22,14 +23,10 @@ public class ssBlockListener extends BlockListener
 
     public void onBlockPlace(BlockPlaceEvent event)
     {
+    	if (event.isCancelled())
+    		return;
     	Player player = event.getPlayer();
     	Block block = event.getBlockPlaced();
-    	Block against = event.getBlockAgainst();
-    	if(against.getType() == Material.BOOKSHELF)
-    	{
-    		event.setCancelled(true);
-    		return;
-    	}
     	if(block.getType() == Material.BOOKSHELF)
     	{
     		AdvShelf shelf = new AdvShelf(block.getLocation());
@@ -41,14 +38,15 @@ public class ssBlockListener extends BlockListener
     
     public void onBlockBreak(BlockBreakEvent event)
     {
-    	Player player = event.getPlayer();
+    	if (event.isCancelled())
+    		return;
     	Block block = event.getBlock();
-    	
     	if(block.getType() == Material.BOOKSHELF)
     	{
     		AdvShelf shelf = new AdvShelf(block.getLocation());
-    		if(shelf.delete())
-    			player.sendMessage(ChatColor.RED + "Bookshelf destroyed.");
+    		shelf.delete();
+    		ItemStack stack = new ItemStack(block.getType(), 1);
+    		block.getWorld().dropItemNaturally(block.getLocation(), stack);
     	}
     }
 }

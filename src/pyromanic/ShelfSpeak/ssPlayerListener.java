@@ -79,17 +79,17 @@ public class ssPlayerListener extends PlayerListener
 				plugin.activeCmd.put(player, null);
 			}
 		}
-		else
+		else	// Display Shelf text
 		{
 			AdvShelf shelf = new AdvShelf(block.getLocation());
 			if(shelf.exists())
 				shelf.load();
-			if(activeCmd == null || 
-				(activeCmd != null && activeCmd.matches("[1-" + AdvShelf.MAX_PAGES + "]")) ||
-				(activeShelf != null && activeShelf.isAt(shelf.getLocation())))
+			if(activeCmd == null 
+					|| (activeCmd != null && activeCmd.matches("(?=[^A-Za-z]+$).*[0-9].*")) 
+					|| (activeShelf != null && activeShelf.isAt(shelf.getLocation())))
 			{
 				int page = 1;
-				if(activeCmd != null && activeCmd.matches("[1-" + AdvShelf.MAX_PAGES + "]"))
+				if(activeCmd != null && activeCmd.matches("(?=[^A-Za-z]+$).*[0-9].*"))
 					page = Integer.parseInt(activeCmd);
 				if(activeShelf != null && activeShelf.isAt(shelf.getLocation()))
 					activeShelf.showPage(player, page);

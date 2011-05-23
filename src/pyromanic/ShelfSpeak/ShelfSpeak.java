@@ -1,12 +1,4 @@
 package pyromanic.ShelfSpeak;
-/*
- * Developer:
- * 		pyromanic
- * Libraries:
- * 		Bukkit [669]
- * 		CraftBukkit [740]
- * 		Permissions [2.7]
- */
 
 import pyromanic.ShelfSpeak.Commands.*;
 
@@ -30,6 +22,12 @@ import java.io.IOException;
  * ShelfSpeak for Bukkit
  *
  * @author pyromanic
+ */
+/*
+ * Libraries:
+ * 		Bukkit [702]
+ * 		CraftBukkit [803]
+ * 		Permissions [2.7.4]
  */
 public class ShelfSpeak extends JavaPlugin 
 {
@@ -82,6 +80,7 @@ public class ShelfSpeak extends JavaPlugin
         getCommand("shelfclear").setExecutor(new ClearCommand(this));
         getCommand("shelfremove").setExecutor(new RemoveCommand(this));
         getCommand("shelfcancel").setExecutor(new CancelCommand(this));
+        //getCommand("shelfimport").setExecutor(new ImportCommand(this));
         getCommand("shelfsave").setExecutor(new SaveCommand(this));
         
         PluginDescriptionFile pdfFile = this.getDescription();
@@ -103,23 +102,23 @@ public class ShelfSpeak extends JavaPlugin
             try 
             {	database.createNewFile();	} 
             catch (IOException e) 
-            {	log.log(Level.SEVERE, "[ShelfSpeak] Could not create database", e);	}
+            {	log.log(Level.SEVERE, "[ShelfSpeak] Could not create database.", e);	}
         }
     }
     
-    public static int[] parseLineArgs(String cmdArg)
+    public static int[] parseLineArgs(Player player, String cmdArg)
     {
+    	int MAX_LINES = ssPermissions.getInstance().maxLines(player);
     	String[] cmdArgs = cmdArg.split(":");
     	int page = 0;
     	int line = 0;
     	// Page:Line parameter parsing
 		if(cmdArgs.length == 1) {
-			try	{
-				line = Integer.parseInt(cmdArgs[0]);
-				page = (line + 9) / 10;
-				line = (line % 10 == 0) ? 10 : line % 10;
-			}
+			try	
+			{	line = Integer.parseInt(cmdArgs[0]);	}
 			catch(NumberFormatException e) {}
+			page = (line / MAX_LINES) + ((line % MAX_LINES == 0) ? 0 : 1);
+			line = (line % MAX_LINES == 0) ? MAX_LINES : line % MAX_LINES;
 		}
 		else if(cmdArgs.length == 2) {
 			try {
@@ -135,11 +134,13 @@ public class ShelfSpeak extends JavaPlugin
     public static boolean checkRanges(Player player, int page, int line)
     {
     	boolean ok = false;
+    	int MAX_PAGES = ssPermissions.getInstance().maxPages(player);
+    	int MAX_LINES = ssPermissions.getInstance().maxLines(player);
     	// Check page/line ranges
-		if(page < 1 || page > AdvShelf.MAX_PAGES)
-			player.sendMessage(ChatColor.RED + "[ShelfSpeak] Page must be 1-" + AdvShelf.MAX_PAGES);
-		else if(line < 1 || line > AdvShelf.MAX_LINES)
-			player.sendMessage(ChatColor.RED + "[ShelfSpeak] Line must be 1-" + AdvShelf.MAX_LINES);
+		if(page < 1 || page > MAX_PAGES)
+			player.sendMessage(ChatColor.RED + "[ShelfSpeak] You are restricted to " + MAX_PAGES + " pages.");
+		else if(line < 1 || line > MAX_LINES)
+			player.sendMessage(ChatColor.RED + "[ShelfSpeak] You are restricted to " + MAX_LINES + " lines.");
 		else
 			ok = true;
 		return ok;
