@@ -46,7 +46,7 @@ public class ShelfCommand implements CommandExecutor
     				player.sendMessage(ChatColor.DARK_AQUA + "[ShelfSpeak] Right click the Bookshelf you wish to view.");
     			}
 		else
-			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelf <page>");
+			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect usage. Use " + ChatColor.AQUA + "/shelf <page>");
 		return true;
 	}
 	

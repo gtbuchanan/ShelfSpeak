@@ -111,7 +111,7 @@ public class ssConversion
 						}
 					} 
 					catch(NumberFormatException e) {} 
-					catch (FileNotFoundException e) {}
+					catch(FileNotFoundException e) {}
 				}
 			if(worldDir.exists() && worldDir.list().length == 0)
 				worldDir.delete();

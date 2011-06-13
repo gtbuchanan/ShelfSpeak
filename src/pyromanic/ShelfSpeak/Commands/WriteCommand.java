@@ -44,7 +44,7 @@ public class WriteCommand implements CommandExecutor
 			else
 				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] You must end the current write first!");
 		else
-			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfwrite");
+			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect usage. Use " + ChatColor.AQUA + "/shelfwrite");
 		return true;
 	}
 	

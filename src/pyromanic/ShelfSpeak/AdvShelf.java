@@ -62,12 +62,7 @@ public class AdvShelf
 	{	return _id;	}
 	
 	public void setLocation(Location loc)
-	{	
-		_world = loc.getWorld().getName();
-		_x = loc.getX();
-		_y = loc.getY();
-		_z = loc.getZ();
-	}
+	{	setLocation(loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ());	}
 	
 	public void setLocation(String world, double x, double y, double z)
 	{	
@@ -76,6 +71,7 @@ public class AdvShelf
 		_y = y;
 		_z = z;
 	}
+	
 	
 	public Location getLocation()
 	{
@@ -125,11 +121,11 @@ public class AdvShelf
 	public boolean isOwner(Player player)
 	{	return _owner.equalsIgnoreCase(player.getName());	}
 	
-	public String getModifier()
-	{	return _mod;	}
-	
 	public void setModifier(String modifier)
 	{	_mod = modifier;	}
+	
+	public String getModifier()
+	{	return _mod;	}
 	
 	public boolean hasModifier()
 	{	return !(_mod == null || _mod.length() == 0);	}
@@ -331,7 +327,40 @@ public class AdvShelf
 			_pages.put(1, lines);
 	}
 	
-	public void loadFromFile(Player player, String path) throws IOException
+	public void importNormal(Player player, String path) throws IOException
+	{
+		BufferedReader reader = new BufferedReader(new FileReader(path));
+		ssPermissions p = ssPermissions.getInstance();
+		int MAX_PAGES = p.maxPages(player);
+		int MAX_LINES = p.maxLines(player);
+		int pageNo = 1, lineNo = 1;
+		HashMap<Integer, String> lines = new HashMap<Integer, String>();
+		String temp;
+		_pages.clear();
+		while((temp = reader.readLine()) != null){
+			if (lineNo <= MAX_LINES)
+			{
+				lines.put(lineNo, temp.substring(0, 
+						(temp.length() < MAX_CHARS) ? 
+								temp.length() : MAX_CHARS).replace('#', '§'));
+				lineNo++;
+			}
+			else
+			{
+				_pages.put(pageNo, lines);
+				pageNo++;
+				lineNo = 1;
+				lines = new HashMap<Integer, String>();
+			}
+			if (pageNo > MAX_PAGES)
+				break;
+		}
+		if (!_pages.containsKey(pageNo))
+			_pages.put(pageNo, lines);
+		reader.close();
+	}
+	
+	public void importStrict(Player player, String path) throws IOException
 	{
 		BufferedReader reader = new BufferedReader(new FileReader(path));
 		ssPermissions p = ssPermissions.getInstance();
@@ -342,41 +371,57 @@ public class AdvShelf
 		StringBuilder current = new StringBuilder();
 		StringBuilder remaining = new StringBuilder();
 		String temp;
-		while((temp = reader.readLine()) != null)
-		{	remaining.append(temp);	}
+		while((temp = reader.readLine()) != null){	
+			remaining.append(temp);
+			remaining.append("\n");
+		}
 		reader.close();
 		
+		_pages.clear();
 		while (true) {
-			int space = 50 - current.length();
-			int i = remaining.indexOf(" ");
-			int len = (i != -1) ? i+1 : remaining.length();
+			int space = MAX_CHARS - current.length();
+			int spi = remaining.indexOf(" ");
+			int nli = remaining.indexOf("\n");
+			int len;
+			if ((spi < nli && spi != -1) || (spi > nli && nli == -1))
+				len = spi + 1;
+			else if (spi == nli)
+				len = remaining.length();
+			else
+				len = nli + 1;
 			if (len <= space) {
-				current.append(remaining.substring(0, len - 1));
-				remaining.delete(0, len - 1);
+				current.append(remaining.substring(0, len-1).replace('#', '§'));
+				current.append(" ");
+				remaining.delete(0, len);
+				space -= len;
+			}
+			else if(len > MAX_CHARS)
+			{
+				current.append(remaining.substring(0, space).replace('#', '§'));
+				remaining.delete(0, space);
 				space -= len;
 			}
 			else {
 				lines.put(lineNo, current.toString());
+				current = new StringBuilder();
 				lineNo++;
 			}
 			if (lineNo > MAX_LINES) {
 				_pages.put(pageNo, lines);
-				lineNo = 1;
 				pageNo++;
-			}
-			if (pageNo > MAX_PAGES) {
-				break;
+				lineNo = 1;
+				lines = new HashMap<Integer, String>();
 			}
 			if (remaining.length() == 0)
 			{
-				if (space < 50) {
+				if (space < MAX_CHARS)
 					lines.put(lineNo, current.toString());
-				}
-				if (lineNo <= MAX_LINES) {
+				if (lineNo <= MAX_LINES)
 					_pages.put(pageNo, lines);
-				}
 				break;
 			}
+			if (pageNo > MAX_PAGES)
+				break;
 		}
 	}
 	
@@ -415,7 +460,7 @@ public class AdvShelf
     	{
 	    	player.sendMessage(ChatColor.DARK_AQUA + 
 	    			String.format("********" + ChatColor.GREEN + "%1$s" + ChatColor.DARK_AQUA + 
-	    					"'s BookShelf - Page: " + ChatColor.GREEN + 
+	    					"'s Bookshelf - Page: " + ChatColor.GREEN + 
 	    					"%2$s of %3$s" + ChatColor.DARK_AQUA + "********", 
 	    					_owner, page, getMaxPage()));
 	    	

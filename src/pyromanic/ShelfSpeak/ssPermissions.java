@@ -25,9 +25,8 @@ public class ssPermissions
         	ShelfSpeak.log.log(Level.SEVERE, "[ShelfSpeak] Permissions isn't loaded. Defaults enabled.");
     }
     
-	@SuppressWarnings("static-access")
 	private static boolean permission(Player player, String string) 
-    {	return permissionsPlugin.Security.permission(player, string);	}
+    {	return permissionsPlugin.getHandler().permission(player, string);	}
 	
 	public static ssPermissions getInstance() 
 	{
@@ -102,52 +101,46 @@ public class ssPermissions
     
     public boolean importFile(Player player)
     {
-    	return false;
-    	/*
     	if(enabled)
     		return permission(player, "shelfspeak.admin.import");
     	else 
     		return player.isOp();
-    	*/
     }
     
-    @SuppressWarnings("static-access")
 	public int maxRadius(Player player)
     {
     	int radius = 0;
     	if(enabled)
-    		radius = permissionsPlugin.Security.getPermissionInteger(
+    		radius = permissionsPlugin.getHandler().getInfoInteger(
     					player.getWorld().getName(), 
     					player.getName(), 
-    					"shelfspeakmaxradius");
+    					"shelfspeakmaxradius", false);
     	if(radius < 0)
     		radius = 5;
     	return radius;
     }
     
-    @SuppressWarnings("static-access")
 	public int maxLines(Player player)
     {
     	int count = 0;
     	if(enabled)
-    		count = permissionsPlugin.Security.getPermissionInteger(
+    		count = permissionsPlugin.getHandler().getInfoInteger(
     					player.getWorld().getName(), 
     					player.getName(), 
-    					"shelfspeakmaxlines");
+    					"shelfspeakmaxlines", false);
     	if(count <= 0)
     		count = 8;
     	return count;
     }
      
-    @SuppressWarnings("static-access")
 	public int maxPages(Player player)
     {
     	int count = 0;
     	if(enabled)
-    		count = permissionsPlugin.Security.getPermissionInteger(
+    		count = permissionsPlugin.getHandler().getInfoInteger(
     					player.getWorld().getName(), 
     					player.getName(), 
-    					"shelfspeakmaxpages");
+    					"shelfspeakmaxpages", false);
     	if(count < 0)
     		count = 5;
     	else if(count == 0)

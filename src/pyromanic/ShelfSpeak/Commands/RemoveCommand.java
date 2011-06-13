@@ -65,7 +65,7 @@ public class RemoveCommand implements CommandExecutor
 					player.sendMessage(ChatColor.RED + "[ShelfSpeak] Page " + page + " line " + line + " does not exist yet.");
 			}
 			else
-				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfremove {<page>:}<line>");
+				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect usage. Use " + ChatColor.AQUA + "/shelfremove {<page>:}<line>");
 		}
 		else
 			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] You must be in write mode to use this command.");

@@ -51,7 +51,10 @@ public class LineCommand implements CommandExecutor
     			}
 			}
 			else
-				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use /shelfline {<page>:}<line> {text}");
+			{
+				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect usage.");
+				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Use /shelfline {<page>:}<line> {text}");
+			}
 		else
 			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] You must be in write mode to use this command.");
 		return true;

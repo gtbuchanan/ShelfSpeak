@@ -25,9 +25,9 @@ import java.io.IOException;
  */
 /*
  * Libraries:
- * 		Bukkit [702]
- * 		CraftBukkit [803]
- * 		Permissions [2.7.4]
+ * 		Bukkit [716]
+ * 		CraftBukkit [860]
+ * 		Permissions [3.1.5b]
  */
 public class ShelfSpeak extends JavaPlugin 
 {
@@ -56,7 +56,7 @@ public class ShelfSpeak extends JavaPlugin
         }
         else if(!ssConversion.perform())	// Convert versions
         {
-        	log.log(Level.SEVERE, "[ShelfSpeak] Database alteration failed. Disabling plugin...");
+        	log.log(Level.SEVERE, "[ShelfSpeak] Database conversion failed. Disabling plugin...");
         	getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -80,7 +80,7 @@ public class ShelfSpeak extends JavaPlugin
         getCommand("shelfclear").setExecutor(new ClearCommand(this));
         getCommand("shelfremove").setExecutor(new RemoveCommand(this));
         getCommand("shelfcancel").setExecutor(new CancelCommand(this));
-        //getCommand("shelfimport").setExecutor(new ImportCommand(this));
+        getCommand("shelfimport").setExecutor(new ImportCommand(this));
         getCommand("shelfsave").setExecutor(new SaveCommand(this));
         
         PluginDescriptionFile pdfFile = this.getDescription();
@@ -127,8 +127,7 @@ public class ShelfSpeak extends JavaPlugin
 			}
 			catch(NumberFormatException e) {}
 		}
-		int[] output = {page, line};
-		return output;
+		return new int[]{page, line};
     }
 
     public static boolean checkRanges(Player player, int page, int line)

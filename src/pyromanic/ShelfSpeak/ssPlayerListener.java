@@ -84,10 +84,11 @@ public class ssPlayerListener extends PlayerListener
 			AdvShelf shelf = new AdvShelf(block.getLocation());
 			if(shelf.exists())
 				shelf.load();
-			if(activeCmd == null 
+			
+			/*if(activeCmd == null 
 					|| (activeCmd != null && activeCmd.matches("(?=[^A-Za-z]+$).*[0-9].*")) 
 					|| (activeShelf != null && activeShelf.isAt(shelf.getLocation())))
-			{
+			{*/
 				int page = 1;
 				if(activeCmd != null && activeCmd.matches("(?=[^A-Za-z]+$).*[0-9].*"))
 					page = Integer.parseInt(activeCmd);
@@ -98,7 +99,7 @@ public class ssPlayerListener extends PlayerListener
 					shelf.showPage(player, page);
 					plugin.activeCmd.put(player, null);
 				}
-			}
+			//}
 		}
     }
     
@@ -107,9 +108,10 @@ public class ssPlayerListener extends PlayerListener
     	Player player = event.getPlayer();
     	Location loc = event.getTo();
     	AdvShelf shelf = plugin.activeShelf.get(player);
-    	int radius = ssPermissions.getInstance().maxRadius(player);
     	
     	if(shelf != null)
+    	{
+    		int radius = ssPermissions.getInstance().maxRadius(player);
     		if(Math.abs(shelf.getX() - loc.getX()) >= radius 
     				|| Math.abs(shelf.getY() - loc.getY()) >= radius
     				|| Math.abs(shelf.getZ() - loc.getZ()) >= radius)
@@ -117,6 +119,7 @@ public class ssPlayerListener extends PlayerListener
     			player.sendMessage(ChatColor.RED + "[ShelfSpeak] Max radius exceeded.");
     			player.performCommand("shelfcancel");
     		}
+    	}
     }
     
     public void onPlayerJoin(PlayerJoinEvent event)

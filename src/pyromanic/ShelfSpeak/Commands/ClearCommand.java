@@ -45,7 +45,7 @@ public class ClearCommand implements CommandExecutor
     				clearPage(player, shelf, page);
 			}
 			else
-				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfclear {<page>}");
+				sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect usage. Use " + ChatColor.AQUA + "/shelfclear {<page>}");
 		}
 		else
 			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] You must be in write mode to use this command.");

@@ -41,7 +41,7 @@ public class CancelCommand implements CommandExecutor
 			}
 		}
 		else
-			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfcancel");
+			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect usage. Use " + ChatColor.AQUA + "/shelfcancel");
 		return true;
 	}
 }

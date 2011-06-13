@@ -37,7 +37,7 @@ public class ColorsCommand implements CommandExecutor
 		if(split.length == 0)
 			showColors(player);
 		else
-			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect command usage. Use " + ChatColor.AQUA + "/shelfcolors");
+			sender.sendMessage(ChatColor.RED + "[ShelfSpeak] Incorrect usage. Use " + ChatColor.AQUA + "/shelfcolors");
 		return true;
 	}
 	
